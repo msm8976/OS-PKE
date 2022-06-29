@@ -202,6 +202,14 @@ int do_fork( process* parent)
         child->mapped_info[child->total_mapped_region].seg_type = CODE_SEGMENT;
         child->total_mapped_region++;
         break;
+      case DATA_SEGMENT:
+        map_pages(child->pagetable,((parent->mapped_info[i].va)<<12)>>12,PGSIZE,(uint64)alloc_page(),prot_to_type(PROT_READ | PROT_WRITE, 1));
+        child->mapped_info[child->total_mapped_region].va = parent->mapped_info[i].va;
+        child->mapped_info[child->total_mapped_region].npages =
+          parent->mapped_info[i].npages;
+        child->mapped_info[child->total_mapped_region].seg_type = DATA_SEGMENT;
+        child->total_mapped_region++;
+        break;
     }
   }
 
@@ -211,4 +219,22 @@ int do_fork( process* parent)
   insert_to_ready_queue( child );
 
   return child->pid;
+}
+
+int do_wait(int pid) {
+  if (pid == -1) {
+    for (int i = 0; i < NPROC; i++) {
+      if (procs[i].parent == current) {
+        current->waitpid=-1;
+        current->status=BLOCKED;
+        schedule();
+        return current->returnpid;
+      }
+    }
+  }
+  if (pid < -1 || pid > NPROC || procs[pid].parent != current) return -1;
+  current->waitpid=pid+1;
+  current->status=BLOCKED;
+  schedule();
+  return pid;
 }

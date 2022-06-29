@@ -69,9 +69,13 @@ typedef struct process_t {
   // next queue element
   struct process_t *queue_next;
 
+  int waitpid;
+  int returnpid;
+
   // accounting. added @lab3_3
   int tick_count;
 }process;
+
 
 // switch to run user app
 void switch_to(process*);
@@ -84,6 +88,7 @@ process* alloc_process();
 int free_process( process* proc );
 // fork a child from parent
 int do_fork(process* parent);
+int do_wait(int pid);
 // initialize process pool (the procs[] array)
 void init_proc_pool();
 // allocate an empty process, init its vm space. returns its pid
